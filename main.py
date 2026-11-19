@@ -4,7 +4,7 @@ U=os.environ.get("MAKEFUN_ENV_URL")or sys.exit("MAKEFUN_ENV_URL not set")
 S=time.time();L=1.7
 V={"p":100,"n":320,"b":330,"r":500,"q":900,"k":20000}
 R={100:"p",320:"n",330:"b",500:"r",900:"q",20000:"k"}
-P={"p":[0,0,0,0,0,0,0,0,50,50,50,50,50,50,50,50,10,10,20,30,30,20,10,10,5,5,10,25,25,10,5,5,0,0,0,0,0,0,0,0,-5,-5,-5,-5,-5,-5,-5,-5],
+P={"p":[0,0,0,0,0,0,0,0,50,50,50,50,50,50,50,50,10,10,20,30,30,20,10,10,5,5,10,25,25,10,5,5,0,0,0,0,0,0,0,0,-5,-5,-5,-5,-5,-5,-5,-5,0,0,0,0,0,0,0,0],
 "n":[-50,-40,-30,-30,-30,-30,-40,-50,-40,-20,0,0,0,0,-20,-40,-30,0,10,15,15,10,0,-30,-30,5,15,20,20,15,5,-30,-30,0,15,20,20,15,0,-30,-30,5,10,10,10,10,5,-30,-40,-20,0,5,5,0,-20,-40,-50,-40,-30,-30,-30,-30,-40,-50],
 "b":[-20,-10,-10,-10,-10,-10,-10,-20,-10,0,0,0,0,0,0,-10,-10,0,5,10,10,5,0,-10,-10,5,5,10,10,5,5,-10,-10,0,10,10,10,10,0,-10,-10,10,10,10,10,10,10,-10,-10,5,0,0,0,5,-10,-20,-10,-10,-10,-10,-10,-10,-20],
 "r":[0,0,0,0,0,0,0,0,5,10,10,10,10,10,10,5,-5,0,0,0,0,0,0,-5,-5,0,0,0,0,0,0,-5,-5,0,0,0,0,0,0,-5,-5,0,0,0,0,0,0,-5,-5,0,0,0,0,0,0,-5,0,0,0,5,5,0,0,0],
@@ -17,7 +17,7 @@ def post(p,b):
     try:
         with urllib.request.urlopen(r)as x:return json.load(x)
     except urllib.error.HTTPError as e:sys.exit(f"{p}: HTTP {e.code}")
-def b2i(s):return"abcdefgh".index(s[0])*8+8-int(s[1])
+def b2i(s):return(8-int(s[1]))*8+"abcdefgh".index(s[0])
 def parse(fen):
     b=[0]*64;c=0
     for ch in fen.split()[0]:
@@ -30,17 +30,19 @@ def eval(b,turn):
     for i,v in enumerate(b):
         if v:
             p=abs(v);col=1 if v>0 else -1;sq=i if col==1 else 63-i
-            s+=col*(p+(P[R[p]][sq] if p<20000 else K[sq]))
+            if 0<=sq<64:s+=col*(p+(P[R[p]][sq] if p<20000 else K[sq]))
     return s*turn
 def see(b,fr,to):
-    mv=b[fr];cap=b[to];v=V[R[abs(cap)]] if cap else 0
+    mv=b[fr];cap=b[to]
+    if not cap:return -V[R[abs(mv)]]
+    v=V[R[abs(cap)]]
     return v-V[R[abs(mv)]]
 def order(b,lm,ttmv):
     def sc(m):
         fr,to=b2i(m[:2]),b2i(m[2:4])
         if m==ttmv:return 3e6
         if b[to]:return 2e6+see(b,fr,to)
-        if len(m)==5:return 1e6+V[m[4]]
+        if len(m)==5:return 1e6+V[m[4].lower()]
         return 0
     return sorted(lm,key=sc,reverse=True)
 def search(b,lm,d,a,beta,turn,ttmv=0):
