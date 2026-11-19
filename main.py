@@ -86,11 +86,13 @@ def ap(b,u,wt):
  return rot("".join(b))
 I=" "*20+" rnbqkbnr  pppppppp "+" ........ "*4+" PPPPPPPP  RNBQKBNR "+" "*20
 def post(p,d):
- with Q.urlopen(Q.Request(U+p,json.dumps(d).encode(),{"content-type":"application/json"}))as r:return json.load(r)
+ try:
+  with Q.urlopen(Q.Request(U+p,json.dumps(d).encode(),{"content-type":"application/json"}))as r:return json.load(r)
+ except Q.HTTPError as x:return{}
 if __name__=="__main__":
  g=post("/game",{})
- while g["status"]!="done":
-  if g["status"]=="your_move":
+ while g.get("status")!="done":
+  if g.get("status")=="your_move":
    b=I;wt=1;P={b}
    for u in g["moves"]:b=ap(b,u,wt);wt^=1;P.add(b)
    lm=g["legal_moves"]
@@ -100,5 +102,6 @@ if __name__=="__main__":
    except Exception:u=lm[0]
    g=post("/move",{"game":g["game"],"move":u})
   else:
-   print(g["game"],g["opponent_name"],g["colour"],g["outcome"],g["reason"],g["plies"],file=sys.stderr);g=post("/game",{})
+   if"outcome"in g:print(g["game"],g["opponent_name"],g["colour"],g["outcome"],g["reason"],g["plies"],file=sys.stderr)
+   g=post("/game",{})
  print("done",g["wins"],g["draws"],g["losses"],file=sys.stderr)
